@@ -1,0 +1,13 @@
+{
+  "name": "juego-orquesta-rockband",
+  "version": "1.0.0",
+  "description": "Juego estilo Rock Band orientado a orquesta",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

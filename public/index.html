@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orquesta Rock Band</title>
+  <meta name="description" content="Juego estilo Rock Band orientado a orquesta clásica. Toca las notas con A, S, D, F, G al ritmo de la sinfonía." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  
+  <!-- Detección de color rojo via Canvas 2D nativo (sin dependencias externas) -->
+</head>
+<body>
+
+  <!-- ===== MAIN MENU SCREEN ===== -->
+  <div id="screen-menu" class="screen active">
+    <div class="menu-bg"></div>
+    <div class="menu-overlay"></div>
+    <div class="menu-content">
+      <div class="title-block">
+        <p class="title-sub">Gran Teatro Nacional</p>
+        <h1 class="title-main">ORQUESTA<br><span>ROCK BAND</span></h1>
+        <div class="title-divider">
+          <span>♩</span><span>♪</span><span>♫</span><span>♬</span><span>♫</span><span>♪</span><span>♩</span>
+        </div>
+      </div>
+      <div class="record-display" id="record-display">
+        <span class="record-label">🏆 RÉCORD</span>
+        <span class="record-value" id="menu-record">0</span>
+      </div>
+      
+      <div class="song-selector-container">
+        <label for="song-dropdown" class="song-selector-label">♫ PISTA MUSICAL</label>
+        <div class="custom-select-wrapper">
+          <select id="song-dropdown" class="song-dropdown" onchange="selectSong(this.value)">
+            <option value="" disabled selected>Cargando partituras...</option>
+          </select>
+        </div>
+      </div>
+
+
+      <!-- Selector de color del puntero para cámara -->
+      <div id="color-picker-section" style="display:flex; align-items:center; justify-content:center; gap:10px; margin: 8px 0 4px; font-family:var(--font-main);">
+        <span style="color:rgba(255,255,255,0.6); font-size:0.76rem; letter-spacing:0.1em; text-transform:uppercase;">Puntero:</span>
+        <!-- ROJO — activo por defecto -->
+        <div id="color-opt-red" onclick="selectPointerColor('red')"
+          style="display:flex; align-items:center; gap:7px; cursor:pointer; padding:6px 16px; border-radius:20px;
+                 border:2px solid #e74c3c; background:#e74c3c; transition:all 0.2s; user-select:none;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#fff;display:inline-block;"></span>
+          <span style="color:#fff; font-size:0.82rem; font-weight:700; letter-spacing:0.05em;">ROJO</span>
+        </div>
+        <!-- VERDE — inactivo por defecto -->
+        <div id="color-opt-green" onclick="selectPointerColor('green')"
+          style="display:flex; align-items:center; gap:7px; cursor:pointer; padding:6px 16px; border-radius:20px;
+                 border:2px solid #2ecc71; background:transparent; transition:all 0.2s; user-select:none; opacity:0.5;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2ecc71;display:inline-block;"></span>
+          <span style="color:#2ecc71; font-size:0.82rem; font-weight:700; letter-spacing:0.05em;">VERDE</span>
+        </div>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="btn-play-normal" class="btn btn-primary" onclick="startGame('normal')">
+          <span class="btn-icon">▶</span> JUGAR
+        </button>
+        <button id="btn-play-hard" class="btn btn-danger" onclick="startGame('hard')">
+          <span class="btn-icon">🔥</span> DIFÍCIL
+        </button>
+        <button id="btn-play-camera-normal" class="btn btn-primary" style="background: linear-gradient(135deg, #10ac84, #1dd1a1); box-shadow: 0 4px 15px rgba(29, 209, 161, 0.4);" onclick="startCameraGame('normal')">
+          <span class="btn-icon">📷</span> CÁMARA
+        </button>
+        <button id="btn-play-camera-hard" class="btn btn-danger" style="background: linear-gradient(135deg, #c0392b, #e74c3c); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);" onclick="startCameraGame('hard')">
+          <span class="btn-icon">📷🔥</span> CAM DIFÍCIL
+        </button>
+        <button id="btn-exit" class="btn btn-secondary" onclick="exitGame()">
+          <span class="btn-icon">✕</span> SALIR
+        </button>
+      </div>
+      <div class="menu-controls-hint">
+        <p>Teclas: <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> &nbsp;|&nbsp; Pausa: <kbd>ESC</kbd></p>
+      </div>
+    </div>
+    <div class="floating-notes" id="floating-notes"></div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="screen-game" class="screen">
+    <div class="game-bg"></div>
+
+    <!-- HUD Top -->
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="hud-box">
+          <span class="hud-label">PUNTOS</span>
+          <span class="hud-value" id="score-display">0</span>
+        </div>
+        <div class="hud-box">
+          <span class="hud-label">COMBO</span>
+          <span class="hud-value combo-val" id="combo-display">x1</span>
+        </div>
+      </div>
+      <div class="hud-center">
+        <div class="song-info">
+          <span id="song-title">Sinfonía Orquestal</span>
+        </div>
+        <div class="accuracy-bar-wrapper" style="margin-bottom: 5px;">
+          <div id="accuracy-bar" class="accuracy-bar">
+            <div id="accuracy-fill" class="accuracy-fill" style="width:100%"></div>
+          </div>
+        </div>
+        <div style="text-align:center; font-family:var(--font-main); font-size:1.1rem; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,0.8);">
+          ⏱ <span id="time-display">0:00</span> / <span id="time-total">0:00</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-box">
+          <span class="hud-label">🏆 RÉCORD</span>
+          <span class="hud-value" id="record-hud">0</span>
+        </div>
+        <button id="btn-pause" class="btn-pause" onclick="pauseGame()">❚❚</button>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <div class="game-area">
+      <canvas id="game-canvas"></canvas>
+      <!-- Hit feedback labels -->
+      <div id="hit-feedback" class="hit-feedback"></div>
+    </div>
+
+    <!-- Lane Key Labels -->
+    <div class="lane-keys">
+      <div class="lane-key" id="key-a" style="--lane-color:#e74c3c">A</div>
+      <div class="lane-key" id="key-s" style="--lane-color:#e67e22">S</div>
+      <div class="lane-key" id="key-d" style="--lane-color:#f1c40f">D</div>
+      <div class="lane-key" id="key-f" style="--lane-color:#2ecc71">F</div>
+      <div class="lane-key" id="key-g" style="--lane-color:#3498db">G</div>
+    </div>
+    
+    <!-- Camera visual feedback -->
+    <div id="hand-pointer" style="display:none; position:absolute; width:22px; height:22px; border-radius:50%; background:#ff3333; box-shadow: 0 0 20px 8px rgba(255, 50, 50, 0.85); pointer-events:none; z-index:900; transform:translate(-50%, -50%); transition:left 0.08s ease-out, top 0.08s ease-out; border: 2px solid rgba(255,255,255,0.5);"></div>
+  </div>
+
+  <!-- ===== PAUSE SCREEN ===== -->
+  <div id="screen-pause" class="screen">
+    <div class="pause-overlay"></div>
+    <div class="pause-content">
+      <h2 class="pause-title">⏸ PAUSA</h2>
+      <div class="pause-score">
+        <p>Puntuación actual: <strong id="pause-score-val">0</strong></p>
+      </div>
+      <div class="pause-buttons">
+        <button class="btn btn-primary" onclick="resumeGame()">▶ CONTINUAR</button>
+        <button class="btn btn-warning" onclick="restartGame()">↺ REINICIAR</button>
+        <button class="btn btn-secondary" onclick="goToMenu()">⌂ MENÚ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME OVER SCREEN ===== -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-bg"></div>
+    <div class="gameover-overlay"></div>
+    <div class="gameover-content">
+      <h2 class="gameover-title" id="gameover-title">🎼 Concierto Finalizado</h2>
+      <div class="gameover-stats">
+        <div class="stat-box">
+          <span class="stat-label">PUNTUACIÓN FINAL</span>
+          <span class="stat-value" id="final-score">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">🏆 RÉCORD</span>
+          <span class="stat-value" id="final-record">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">ACIERTOS</span>
+          <span class="stat-value" id="final-hits">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">PRECISIÓN</span>
+          <span class="stat-value" id="final-accuracy">0%</span>
+        </div>
+      </div>
+      <div id="new-record-badge" class="new-record-badge hidden">🌟 ¡NUEVO RÉCORD!</div>
+      <div class="gameover-buttons">
+        <button class="btn btn-primary" onclick="restartGame()">↺ JUGAR DE NUEVO</button>
+        <button class="btn btn-secondary" onclick="goToMenu()">⌂ MENÚ PRINCIPAL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOADING OVERLAY ===== -->
+  <div id="loading-overlay" class="screen" style="z-index:9999; background:rgba(0,0,0,0.85); display:none;">
+    <h2 style="color:var(--gold-light); font-family:var(--font-title); font-size:2rem; margin-bottom:1rem;">Afincando Instrumentos...</h2>
+    <div style="width:200px; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+      <div id="loading-bar" style="width:0%; height:100%; background:var(--gold); transition:width 0.3s;"></div>
+    </div>
+    <p id="loading-text" style="color:#fff; margin-top:10px; font-size:0.9rem; letter-spacing:0.1em;"></p>
+  </div>
+
+  <!-- Hidden Video for Camera Input -->
+  <video id="input-video" style="display:none;"></video>
+
+  <script src="/js/partitura.js"></script>
+  <script src="/js/analyzer.js"></script>
+  <script src="/js/music.js"></script>
+  <script src="/js/camera.js"></script>
+  <script src="/js/game.js"></script>
+</body>
+</html>
