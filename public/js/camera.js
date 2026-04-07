@@ -279,10 +279,6 @@ const CameraTracker = (() => {
     offCanvas = document.createElement('canvas');
     offCanvas.width = PROC_W; offCanvas.height = PROC_H;
     offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'd' && isRunning) toggleDebug();
-    });
   }
 
   // ─── API PÚBLICA ──────────────────────────────────────────────────────────
@@ -291,10 +287,16 @@ const CameraTracker = (() => {
     setColor(colorName) {
       if (COLOR_PROFILES[colorName]) {
         profile = COLOR_PROFILES[colorName];
-        // Actualizar borde del puntero visual para que coincida con el color
         const p = document.getElementById('hand-pointer');
         if (p) p.style.background = profile.colorUp;
       }
+    },
+
+    /** Activar o desactivar el panel de debug desde el menú */
+    setDebug(enabled) {
+      if (enabled === debugMode) return;
+      debugMode = enabled;
+      if (debugMode) createDebugPanel(); else removeDebugPanel();
     },
 
     start: async (color, onProgress) => {

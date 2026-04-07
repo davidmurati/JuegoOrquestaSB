@@ -176,10 +176,16 @@ function playMissSound() {
 // LAYOUT HELPERS
 // ===========================
 function getLaneLayout() {
-  const totalLaneWidth = Math.min(canvas.width * 0.7, 600);
+  const isMobile = canvas.width < 600;
+  // En móvil usamos casi todo el ancho; en desktop limitamos a 600px
+  const totalLaneWidth = isMobile
+    ? canvas.width * 0.97
+    : Math.min(canvas.width * 0.7, 600);
   const laneW = totalLaneWidth / CONFIG.LANES;
   const startX = (canvas.width - totalLaneWidth) / 2;
-  const hitY = canvas.height * CONFIG.HIT_Y_RATIO;
+  // En móvil dejamos espacio para los botones de carril (≈70px abajo)
+  const bottomReserve = isMobile ? 70 : 0;
+  const hitY = (canvas.height - bottomReserve) * CONFIG.HIT_Y_RATIO;
   return { startX, laneW, hitY, totalLaneWidth };
 }
 
@@ -221,10 +227,6 @@ function showScreen(name) {
   const screen = document.getElementById('screen-' + name);
   if (screen) screen.classList.add('active');
   state.screen = name;
-  
-  if (name === 'menu' && window.CameraTracker) {
-    CameraTracker.stop();
-  }
 }
 
 // ===========================
@@ -301,6 +303,36 @@ function selectPointerColor(color) {
 }
 window.selectPointerColor = selectPointerColor;
 
+// ===========================
+// CAMERA GAME: Only starts camera when user explicitly clicks camera button
+// ===========================
+let cameraMode = false;   // false = no cámara, true = cámara activa
+
+function setCameraActiveBadge(visible) {
+  const badge = document.getElementById('camera-active-badge');
+  if (badge) badge.classList.toggle('visible', visible);
+}
+
+// ===========================
+// TOGGLE DEBUG DE CÁMARA (desde el menú)
+// ===========================
+let cameraDebugEnabled = false;
+
+function toggleCameraDebug(enabled) {
+  cameraDebugEnabled = enabled;
+
+  // Animar el toggle visual (slider + knob)
+  const slider = document.getElementById('debug-slider');
+  const knob   = document.getElementById('debug-knob');
+  if (slider) slider.style.background = enabled ? 'rgba(16,172,132,0.85)' : 'rgba(255,255,255,0.15)';
+  if (knob)   knob.style.transform    = enabled ? 'translateX(16px)' : 'translateX(0)';
+  if (knob)   knob.style.background   = enabled ? '#fff' : 'rgba(255,255,255,0.5)';
+
+  // Si la cámara ya está corriendo, aplicar inmediatamente
+  if (window.CameraTracker) CameraTracker.setDebug(enabled);
+}
+window.toggleCameraDebug = toggleCameraDebug;
+
 async function startCameraGame(mode) {
   const loadingScreen = document.getElementById('loading-overlay');
   const loadingText   = document.getElementById('loading-text');
@@ -316,8 +348,14 @@ async function startCameraGame(mode) {
     await CameraTracker.start(activePointerColor, msg => {
       if (loadingText) loadingText.textContent = msg;
     });
+    cameraMode = true;
+    setCameraActiveBadge(true);
+    // Aplicar preferencia de debug seleccionada en el menú
+    CameraTracker.setDebug(cameraDebugEnabled);
     startGame(mode || 'normal');
   } catch (err) {
+    cameraMode = false;
+    setCameraActiveBadge(false);
     alert("No se pudo iniciar la cámara. Verifica los permisos o usa HTTPS/localhost.");
     console.error(err);
     if (loadingScreen) {
@@ -331,6 +369,12 @@ async function startGame(mode) {
   getHitAudioCtx(); // Unlock hit audio context on user gesture
   stopFloatingNotes();
   state.mode = mode || 'normal';
+  
+  // Si el juego normal (sin cámara), asegurarse de que la cámara esté detenida
+  // La cámara sólo se activa cuando el usuario presiona el botón 📷
+  if (!cameraMode && window.CameraTracker) {
+    CameraTracker.stop();
+  }
   
   if (lastAnalyzedSongId !== selectedSongId) {
     const loadingScreen = document.getElementById('loading-overlay');
@@ -481,6 +525,7 @@ function resumeGame() {
 function restartGame() {
   if (state.animId) cancelAnimationFrame(state.animId);
   Music.stop();
+  // Al reiniciar sin botón de cámara, mantener estado de cámara actual
   startGame(state.mode);
 }
 
@@ -489,6 +534,13 @@ function goToMenu() {
   state.running = false;
   // Detener música al volver al menú
   Music.stop();
+  // Detener cámara, quitar debug y badge
+  if (window.CameraTracker) {
+    CameraTracker.setDebug(false);   // ocultar panel debug al salir
+    CameraTracker.stop();
+  }
+  cameraMode = false;
+  setCameraActiveBadge(false);
   updateRecordDisplay();
   showScreen('menu');
   startFloatingNotes();
@@ -1016,11 +1068,25 @@ document.addEventListener('keyup', (e) => {
 // MOBILE / TOUCH SUPPORT (lane buttons)
 // ===========================
 document.querySelectorAll('.lane-key').forEach((el, i) => {
-  el.style.pointerEvents = 'auto';
+  // Asegurarse que reciba eventos de puntero
+  el.setPointerCapture && el.addEventListener('gotpointercapture', () => {});
+
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    el.setPointerCapture(e.pointerId);
     handleKeyPress(i);
   });
+
+  // Al soltar el toque: liberar el lane (equivalente a keyup)
+  const releaseHandler = (e) => {
+    e.preventDefault();
+    state.lanePressed[i] = false;
+    const keyEl = document.getElementById('key-' + CONFIG.LANE_KEYS[i]);
+    if (keyEl) keyEl.classList.remove('pressed');
+  };
+  el.addEventListener('pointerup',     releaseHandler);
+  el.addEventListener('pointercancel', releaseHandler);
+  el.addEventListener('pointerleave',  releaseHandler);
 });
 
 // ===========================

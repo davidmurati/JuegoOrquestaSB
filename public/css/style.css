@@ -437,6 +437,8 @@ kbd {
   display: flex;
   gap: 0;
   pointer-events: none;
+  width: min(500px, 100vw);
+  justify-content: center;
 }
 .lane-key {
   width: 100px;
@@ -455,12 +457,126 @@ kbd {
   text-shadow: 0 0 12px var(--lane-color, #fff);
   transition: all 0.1s ease;
   box-shadow: 0 0 12px rgba(0,0,0,0.6), inset 0 -3px 0 rgba(0,0,0,0.4);
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 .lane-key.pressed {
   background: var(--lane-color);
   color: #fff;
   transform: scale(0.93);
   box-shadow: 0 0 24px var(--lane-color);
+}
+
+/* ===== CAMERA ACTIVE BADGE ===== */
+#camera-active-badge {
+  position: fixed;
+  top: 70px;
+  right: 12px;
+  z-index: 9998;
+  background: rgba(16,172,132,0.92);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(16,172,132,0.5);
+}
+#camera-active-badge.visible { display: flex; }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 600px) {
+  /* HUD compacto */
+  .hud-top {
+    padding: 6px 8px;
+  }
+  .hud-box {
+    padding: 4px 8px;
+  }
+  .hud-value {
+    font-size: 1rem;
+    min-width: 40px;
+  }
+  .hud-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+  .hud-left, .hud-right {
+    gap: 6px;
+  }
+  .hud-center {
+    padding: 0 6px;
+  }
+  .song-info {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+  }
+  .btn-pause {
+    width: 34px;
+    height: 34px;
+    font-size: 0.8rem;
+  }
+  .accuracy-bar-wrapper {
+    max-width: 140px;
+  }
+
+  /* Lane keys ajustadas al ancho de pantalla */
+  .lane-keys {
+    bottom: 8px;
+    width: 100vw;
+  }
+  .lane-key {
+    flex: 1;
+    width: unset;
+    min-width: 0;
+    height: 52px;
+    font-size: 1.1rem;
+    margin: 0 2px;
+    border-radius: 6px;
+  }
+
+  /* Feedback centrado */
+  .hit-feedback {
+    font-size: 1.8rem;
+  }
+
+  /* Menú compacto */
+  .menu-content {
+    gap: 14px;
+    padding: 20px 16px;
+  }
+  .title-main {
+    font-size: clamp(1.6rem, 8vw, 2.5rem);
+  }
+  .menu-buttons {
+    width: 100%;
+    max-width: 280px;
+  }
+  .btn {
+    padding: 12px 20px;
+    font-size: 0.85rem;
+  }
+  .song-selector-container {
+    width: 100%;
+    max-width: 280px;
+  }
+  .gameover-stats {
+    gap: 10px;
+  }
+  .stat-box {
+    padding: 10px 14px;
+    min-width: 100px;
+  }
+  .stat-value {
+    font-size: 1.4rem;
+  }
 }
 
 /* ===== HIT FEEDBACK ===== */

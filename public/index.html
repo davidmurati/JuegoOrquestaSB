@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
   <title>Orquesta Rock Band</title>
   <meta name="description" content="Juego estilo Rock Band orientado a orquesta clásica. Toca las notas con A, S, D, F, G al ritmo de la sinfonía." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -58,6 +58,28 @@
           <span style="width:12px;height:12px;border-radius:50%;background:#2ecc71;display:inline-block;"></span>
           <span style="color:#2ecc71; font-size:0.82rem; font-weight:700; letter-spacing:0.05em;">VERDE</span>
         </div>
+      </div>
+
+      <!-- Toggle de Debug de Cámara -->
+      <div id="debug-toggle-section" style="display:flex; align-items:center; justify-content:center; gap:10px; margin: 0 0 2px;">
+        <label for="chk-camera-debug" style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; color:rgba(255,255,255,0.5); font-size:0.74rem; letter-spacing:0.08em; font-family:var(--font-ui);">
+          <span style="position:relative; display:inline-block; width:36px; height:20px;">
+            <input type="checkbox" id="chk-camera-debug" onchange="toggleCameraDebug(this.checked)"
+              style="opacity:0; width:0; height:0; position:absolute;" />
+            <span id="debug-slider" style="
+              position:absolute; inset:0; border-radius:20px;
+              background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2);
+              transition:background 0.25s;
+            "></span>
+            <span id="debug-knob" style="
+              position:absolute; top:3px; left:3px;
+              width:14px; height:14px; border-radius:50%;
+              background:rgba(255,255,255,0.5);
+              transition:transform 0.25s, background 0.25s;
+            "></span>
+          </span>
+          🔍 Ver debug de cámara
+        </label>
       </div>
 
       <div class="menu-buttons">
